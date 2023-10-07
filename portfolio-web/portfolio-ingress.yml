@@ -1,0 +1,23 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: portfolio
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-cluster-issuer"
+  
+spec:
+  tls:
+  - hosts:
+    - portfolio.ujstor.com
+    secretName: portfolio-tls
+  rules:
+  - host: portfolio.ujstor.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service: 
+            name: portfolio-service
+            port: 
+              number: 5000

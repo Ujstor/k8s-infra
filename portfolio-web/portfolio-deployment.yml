@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: portfolio-deployment
+  labels:
+    app: portfolio
+spec:
+  replicas: 4
+  selector:
+    matchLabels:
+      app: portfolio
+  template:
+    metadata:
+      labels:
+        app: portfolio
+    spec:
+      containers:
+      - name: portfolio-web
+        image: ujstor/portfolio_web
+        ports:
+        - containerPort: 5000
+        env:
+        - name: KEY
+          valueFrom:
+            secretKeyRef:
+              name: portfolio-secret
+              key: KEY
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: portfolio-service
+spec:
+  selector:
+    app: portfolio
+  ports:
+    - protocol: TCP
+      port: 5000
+      targetPort: 5000
