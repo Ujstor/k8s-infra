@@ -9,9 +9,6 @@ spec:
     privateKeySecretRef:
       name: letsencrypt-cluster-issuer-key
     solvers:
-    - dns01:
-        cloudflare:
-          email: astipam@gmail.com
-          apiKeySecretRef:
-            name: cloudflare-api-key-secret
-            key: api-key
+    - http01:
+        ingress:
+          class: nginx

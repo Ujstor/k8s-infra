@@ -33,7 +33,9 @@ metadata:
 spec:
   selector:
     app: portfolio
+  type: LoadBalancer
   ports:
     - protocol: TCP
       port: 5000
       targetPort: 5000
+      nodePort: 30100
