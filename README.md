@@ -1,8 +1,8 @@
 # k8s infrastructure & configuration as code
 
-## Deploying an Affordable Kubernetes Cluster on Hetzner Cloud
 
-This guide will walk you through the deployment of an affordable Kubernetes cluster on Hetzner Cloud using the [kube-hetzner/terraform-hcloud-kube-hetzner](https://github.com/kube-hetzner/terraform-hcloud-kube-hetzner) repository. This project aims to create a highly optimized, auto-upgradable, HA (Highly Available), and cost-effective Kubernetes cluster on Hetzner Cloud.
+
+Deploy Kubernetes cluster on Hetzner Cloud using the [kube-hetzner/terraform-hcloud-kube-hetzner](https://github.com/kube-hetzner/terraform-hcloud-kube-hetzner) repository. This project aims to create a highly optimized, auto-upgradable, highly available and cost-effective Kubernetes cluster on Hetzner Cloud.
 
 ## Prerequisites
 
@@ -105,5 +105,3 @@ This script will remove all resources related to your cluster.
 ## Upgrading the Module
 
 To upgrade the module to the latest version, modify the version attribute in your `kube.tf` file and apply the configuration using Terraform.
-
-This guide should help you get started with deploying an affordable Kubernetes cluster on Hetzner Cloud using the `kube-hetzner/terraform-hcloud-kube-hetzner` repository. You can further customize and manage your cluster based on your specific requirements.
