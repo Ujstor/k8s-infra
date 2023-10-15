@@ -1,12 +1,16 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: portfolio
   annotations:
-    kubernetes.io/ingress.class: "nginx"
-  
-  
+    cert-manager.io/cluster-issuer: letsencrypt-cluster-issuer
+    acme.cert-manager.io/http01-edit-in-place: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "false"
+    cert-manager.io/issue-temporary-certificate: "true"
+    cert-manager.io/acme-challenge-type: http01
+  name: portfolio
+
 spec:
+  ingressClassName: nginx
   tls:
   - hosts:
     - portfolio.ujstor.com
@@ -18,7 +22,7 @@ spec:
       - path: /
         pathType: Prefix
         backend:
-          service: 
+          service:
             name: portfolio-service
-            port: 
+            port:
               number: 5000
