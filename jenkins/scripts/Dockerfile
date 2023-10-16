@@ -30,4 +30,4 @@ RUN apt update && \
 RUN chmod +x docker_tag.sh && chmod +x pytest.sh
 
 
-CMD ["bash"]
+ENTRYPOINT ["setup-sshd"]
