@@ -4,17 +4,21 @@ metadata:
   name: longhorn-ingress
   namespace: longhorn-system
   annotations:
-    # type of authentication
     nginx.ingress.kubernetes.io/auth-type: basic
-    # prevent the controller from redirecting (308) to HTTPS
     nginx.ingress.kubernetes.io/ssl-redirect: 'false'
-    # name of the secret that contains the user/password definitions
+    cert-manager.io/cluster-issuer: letsencrypt-cluster-issuer
+    acme.cert-manager.io/http01-edit-in-place: "true"
     nginx.ingress.kubernetes.io/auth-secret: basic-auth
-    # message to display with an appropriate context why the authentication is required
+    cert-manager.io/issue-temporary-certificate: "true"
+    cert-manager.io/acme-challenge-type: http01
     nginx.ingress.kubernetes.io/auth-realm: 'Authentication Required '
-    # custom max body size for file uploading like backing image uploading
     nginx.ingress.kubernetes.io/proxy-body-size: 10000m
 spec:
+  ingressClassName: nginx
+  tls:
+  - hosts:
+    - longhorn.ujstor.com
+    secretName: longhorn-tls
   rules:
   - host: longhorn.ujstor.com
     http:

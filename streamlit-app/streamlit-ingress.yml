@@ -1,17 +1,28 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-cluster-issuer
+    acme.cert-manager.io/http01-edit-in-place: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "false"
+    cert-manager.io/issue-temporary-certificate: "true"
+    cert-manager.io/acme-challenge-type: http01
   name: streamlit-ingress
   namespace: default
 spec:
+  ingressClassName: nginx
+  tls:
+  - hosts:
+    - streamlit.ujstor.com
+    secretName: streamlit-tls
   rules:
   - host: streamlit.ujstor.com
     http:
       paths:
       - path: /
-        pathType: Prefix  
+        pathType: Prefix
         backend:
           service:
             name: streamlit-service
-            port: 
+            port:
               number: 8501

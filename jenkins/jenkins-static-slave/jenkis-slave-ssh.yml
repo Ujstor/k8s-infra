@@ -1,0 +1,61 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: jenkins-slave-pvc
+  namespace: jenkins
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: longhorn
+  resources:
+    requests:
+      storage: 5Gi
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: jenkins-slave-agent
+  namespace: jenkins
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: jenkins-slave-agent
+  template:
+    metadata:
+      labels:
+        app: jenkins-slave-agent
+    spec:
+      containers:
+        - name: jenkins-slave
+          image: jenkins/ssh-agent:alpine-jdk17
+          env:
+            - name: JENKINS_AGENT_SSH_PUBKEY
+              value: "your-public-key"
+          ports:
+            - containerPort: 2222
+          securityContext:
+            privileged: false
+          volumeMounts:
+            - name: jenkins-slave-data
+              mountPath: /var/empty
+    volumes:
+        - name: jenkins-slave-data
+          persistentVolumeClaim:
+              claimName: jenkins-slave-pvc
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: jenkins-slave-service
+  namespace: jenkins
+spec:
+  selector:
+    app: jenkins-slave-agent
+  ports:
+    - protocol: TCP
+      port: 2222
+      targetPort: 2222
+

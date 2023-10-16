@@ -5,7 +5,7 @@ metadata:
   labels:
     app: streamlit
 spec:
-  replicas: 1
+  replicas: 2
   selector:
     matchLabels:
       app: streamlit
@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: streamlit-web
-        image: ujstor/working_hours
+        image: ujstor/working_hours:1.0.0
         ports:
         - containerPort: 8501
 ---

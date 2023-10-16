@@ -7,23 +7,23 @@ metadata:
     nginx.ingress.kubernetes.io/force-ssl-redirect: "false"
     cert-manager.io/issue-temporary-certificate: "true"
     cert-manager.io/acme-challenge-type: http01
-  name: portfolio
-  namespace: default
+  name: jenkins
+  namespace: jenkins
 
 spec:
   ingressClassName: nginx
   tls:
   - hosts:
-    - portfolio.ujstor.com
-    secretName: portfolio-tls
+    - jenkins-k3s.ujstor.com
+    secretName: jenkins-tls
   rules:
-  - host: portfolio.ujstor.com
+  - host: jenkins-k3s.ujstor.com
     http:
       paths:
       - path: /
         pathType: Prefix
         backend:
           service:
-            name: portfolio-service
+            name: jenkins-service
             port:
-              number: 5000
+              number: 8080

@@ -102,6 +102,8 @@ module "kube-hetzner" {
     etcd-s3-bucket          = "k3s-etcd-snapshots"
   }
 
+  enable_longhorn = true
+
   longhorn_replica_count = 1
 
   ingress_controller = "nginx"
