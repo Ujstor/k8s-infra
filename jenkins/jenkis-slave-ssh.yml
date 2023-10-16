@@ -15,8 +15,10 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: jenkins-slave-agent
+  name: jenkins-slave-agent-deployment
   namespace: jenkins
+  labels:
+    app: jenkins-slave-agent
 spec:
   replicas: 1
   selector:
@@ -32,18 +34,19 @@ spec:
           image: jenkins/ssh-agent:alpine-jdk17
           env:
             - name: JENKINS_AGENT_SSH_PUBKEY
-              value: "your-public-key"
+              value: "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCzis64jXp926WYhgbC1TumIpaAxvBoCPQdVE56tiy2cWKRmxTs5GHkfoKqzOzmPQcNDIrGcjHy37o5PjxKNud8nHyjHU1iNek8tG2nu16aGYspJ3lYg1TMVhDMd4AIlIsnObOI+NbQHjWKT7iucwwHklwgnmisaCEuQRhAN7L3BV46Vmemyf/WS9nH0PTozgMkP+DgIZoxgXCq9ZXE2mea1hWkMTd5MBXj6Tq4Kb9WpEMMU8GsvHWRgnYV3MhZ49wMws0QE8au06ssWK7yKefVh+HugWMH3JARvCFhUUOED5msA4Tx6t8ePFiR9GGfCkRbo72hfEE74rnVotFQ/L9SL1gGqZr5yLRUz8zMgxtFyHIYW5y3Owe1cDPgNUUpQFECG5PDzpBLsOy522aFedwXgRGUGIzgCxcllBt5UmavAlAnVnxlnhv9+cj5W4bwh6AsooGmKEdU8pbevQ+BA676ZKe6F8AsRxHVVmbxrBGGfDsjTO3lz5lruNFZ1PAsNzs= root@k3s-control-plane-fsn1-zcw"
           ports:
-            - containerPort: 2222
+            - containerPort: 22
           securityContext:
             privileged: false
           volumeMounts:
             - name: jenkins-slave-data
               mountPath: /var/empty
-    volumes:
+      volumes:
         - name: jenkins-slave-data
           persistentVolumeClaim:
-              claimName: jenkins-slave-pvc
+            claimName: jenkins-slave-pvc
+
 
 ---
 apiVersion: v1
@@ -56,6 +59,6 @@ spec:
     app: jenkins-slave-agent
   ports:
     - protocol: TCP
-      port: 2222
-      targetPort: 2222
+      port: 22
+      targetPort: 22
 
