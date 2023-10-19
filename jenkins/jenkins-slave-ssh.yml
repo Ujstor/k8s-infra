@@ -9,7 +9,7 @@ spec:
   storageClassName: longhorn
   resources:
     requests:
-      storage: 15Gi
+      storage: 5Gi
 
 ---
 apiVersion: apps/v1
@@ -61,4 +61,3 @@ spec:
     - protocol: TCP
       port: 22
       targetPort: 22
-
