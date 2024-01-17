@@ -10,7 +10,7 @@
   ./"${KREW}" install krew
 )
 
-export PATH="${KREW_ROOT:-$HOME/.krew}/bin:$PATH"
-
 kubectl krew install ctx
 kubectl krew install ns
+
+export PATH="${KREW_ROOT:-$HOME/.krew}/bin:$PATH"

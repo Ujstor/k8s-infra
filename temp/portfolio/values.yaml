@@ -1,0 +1,8 @@
+deployment:
+  image: "ujstor/portfolio-web-go"
+  tag: "1.0.7"
+
+name: portfolio-deployment
+namespace: portfolio
+domain: portfolio.ujstor.com
+ingressClassName: nginx

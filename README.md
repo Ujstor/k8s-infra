@@ -8,30 +8,23 @@ Deploy Kubernetes cluster on Hetzner Cloud using the [kube-hetzner/terraform-hcl
 
 Before you begin, ensure you have the following:
 
-- A Hetzner Cloud account. You can sign up for one [here](https://console.hetzner.cloud/projects).
+- A Hetzner Cloud account. You can sign up for one [here](https://hetzner.cloud/?ref=Ix9xCKNxJriM).
 - The following command-line tools installed:
   - [Terraform](https://www.terraform.io/downloads.html)
   - [Packer](https://www.packer.io/downloads)
   - [kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/)
   - [hcloud CLI](https://github.com/hetznercloud/cli)
 
-You can install these tools using Homebrew on macOS or your preferred package manager on Linux.
 
-```shell
-brew install terraform
-brew install packer
-brew install kubectl
-brew install hcloud
-```
 
 ## Deployment Steps
 
 ### 1. Generate SSH Keys
 
-Generate a passphrase-less SSH key pair to be used for the cluster. Make note of the paths to your private and public keys.
+Generate a passphrase-less SSH key pair to be used for the cluster.
 
 ```shell
-ssh-keygen -t ed25519 -N "<name>" -f ~/.ssh/hcloud-kube-hetzner
+ssh-keygen -t ed25519 -N "" -f ~/.ssh/hcloud-kube-hetzner
 ```
 
 ### 2. Create Your kube.tf File and Snapshot
@@ -55,7 +48,7 @@ This command will help you set up a new folder with the required files and guide
 
 ### 3. Customize kube.tf
 
-In your project folder, you will find the `kube.tf` file. Customize this file to suit your needs, specifying variables such as the number of control-plane and agent nodes, CNI choice, and other cluster configurations. An example of a `cube.tf` file is in the root of this repository; please check it out. It is quite simple to create a Kubernetes cluster in Hetzner for an affordable price.
+In your project folder, you will find the `kube.tf` file. Customize this file to suit your needs, specifying variables such as the number of control-plane and agent nodes, CNI choice, and other cluster configurations. An example of a `cube.tf` file is in the root of this repository.
 
 ### 4. Initialize and Apply Terraform
 
@@ -80,7 +73,7 @@ Once the cluster is deployed, you can access and manage it:
   terraform output kubeconfig
   ```
 
-- To manage your cluster with `kubectl`, either SSH into a control-plane node or use the Kube API directly as described in the project's documentation.
+- To manage your cluster with `kubectl`, either SSH into a control-plane node or use the Kube API.
 
 ### 6. Scaling and Maintenance
 

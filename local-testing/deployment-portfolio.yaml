@@ -1,0 +1,76 @@
+---
+# Source: portfolio/templates/namespace.yml
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: portfolio
+---
+# Source: portfolio/templates/services.yml
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: portfolio
+  name: portfolio-deployment
+spec:
+  selector:
+    app: portfolio-deployment
+  type:
+  ports:
+    - protocol: TCP
+      port: 5000 
+      targetPort: 5000
+---
+# Source: portfolio/templates/deployment.yml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: portfolio
+  name: portfolio-deployment
+  labels:
+    app: portfolio-deployment 
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: portfolio-deployment 
+  template:
+    metadata:
+      labels:
+        app: portfolio-deployment 
+    spec:
+      containers:
+      - name: portfolio-deployment
+        image: ujstor/portfolio-web-go:1.0.7 
+        ports:
+        - containerPort: 5000
+---
+# Source: portfolio/templates/ingress.yml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: portfolio-deployment
+  namespace: portfolio
+  annotations:
+    # cert-manager.io/cluster-issuer: letsencrypt-cluster-issuer
+    # acme.cert-manager.io/http01-edit-in-place: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "false"
+    # cert-manager.io/issue-temporary-certificate: "true"
+    # cert-manager.io/acme-challenge-type: http01
+
+spec:
+  ingressClassName: nginx
+  # tls:
+  # - hosts:
+  #   - localhost
+  #   secretName: portfolio-tls
+  rules:
+  - host: localhost 
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: portfolio-deployment
+            port:
+              number: 5000
