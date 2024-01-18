@@ -57,6 +57,18 @@ module "kube-hetzner" {
   # * For Hetzner locations see https://docs.hetzner.com/general/others/data-centers-and-connection/
   network_region = "eu-central" # change to `us-east` if location is ash
 
+  # If you want to create the private network before calling this module,
+  # you can do so and pass its id here. For example if you want to use a proxy
+  # which only listens on your private network. Advanced use case.
+  #
+  # NOTE1: make sure to adapt network_ipv4_cidr, cluster_ipv4_cidr, and service_ipv4_cidr accordingly.
+  #        If your network is created with 10.0.0.0/8, and you use subnet 10.128.0.0/9 for your
+  #        non-k3s business, then adapting `network_ipv4_cidr = "10.0.0.0/9"` should be all you need.
+  #
+  # NOTE2: square brackets! This must be a list of length 1.
+  #
+  # existing_network_id = [hcloud_network.your_network.id]
+
   # If you must change the network CIDR you can do so below, but it is highly advised against.
   # network_ipv4_cidr = "10.0.0.0/8"
 
@@ -64,14 +76,21 @@ module "kube-hetzner" {
   # This is due to the creation of a subnet for each nodepool with CIDRs being in the shape of 10.[nodepool-index].0.0/16 which collides with k3s' cluster and service IP ranges (defaults below).
   # Furthermore the maximum number of nodepools (controlplane and agent) is 50, due to a hard limit of 50 subnets per network, see https://docs.hetzner.com/cloud/networks/faq/.
   # So to be able to create a maximum of 50 nodepools in total, the values below have to be changed to something outside that range, e.g. `10.200.0.0/16` and `10.201.0.0/16` for cluster and service respectively.
-  
+
   # If you must change the cluster CIDR you can do so below, but it is highly advised against.
+  # Never change this value after you already initialized a cluster. Complete cluster redeploy needed!
   # The cluster CIDR must be a part of the network CIDR!
   # cluster_ipv4_cidr = "10.42.0.0/16"
 
   # If you must change the service CIDR you can do so below, but it is highly advised against.
+  # Never change this value after you already initialized a cluster. Complete cluster redeploy needed!
   # The service CIDR must be a part of the network CIDR!
   # service_ipv4_cidr = "10.43.0.0/16"
+
+  # If you must change the service IPv4 address of core-dns you can do so below, but it is highly advisd against.
+  # Never change this value after you already initialized a cluster. Complete cluster redeploy needed!
+  # The service IPv4 address must be part of the service CIDR!
+  # cluster_dns_ipv4 = "10.43.0.10"
 
   # For the control planes, at least three nodes are the minimum for HA. Otherwise, you need to turn off the automatic upgrades (see README).
   # **It must always be an ODD number, never even!** Search the internet for "split-brain problem with etcd" or see https://rancher.com/docs/k3s/latest/en/installation/ha-embedded/
@@ -95,7 +114,6 @@ module "kube-hetzner" {
 
   # Please note that changing labels and taints after the first run will have no effect. If needed, you can do that through Kubernetes directly.
 
-  # ⚠️ When choosing ARM cax* server types, for the moment they are only available in fsn1 and hel1.
   # Multi-architecture clusters are OK for most use cases, as container underlying images tend to be multi-architecture too.
 
   # * Example below:
@@ -108,6 +126,9 @@ module "kube-hetzner" {
       labels      = [],
       taints      = [],
       count       = 1
+      # swap_size   = "2G" # remember to add the suffix, examples: 512M, 1G
+      # zram_size   = "2G" # remember to add the suffix, examples: 512M, 1G
+      # kubelet_args = ["kube-reserved=cpu=250m,memory=1500Mi,ephemeral-storage=1Gi", "system-reserved=cpu=250m,memory=300Mi"]
 
       # Enable automatic backups via Hetzner (default: false)
       # backups = true
@@ -144,6 +165,9 @@ module "kube-hetzner" {
       labels      = [],
       taints      = [],
       count       = 1
+      # swap_size   = "2G" # remember to add the suffix, examples: 512M, 1G
+      # zram_size   = "2G" # remember to add the suffix, examples: 512M, 1G
+      # kubelet_args = ["kube-reserved=cpu=50m,memory=300Mi,ephemeral-storage=1Gi", "system-reserved=cpu=250m,memory=300Mi"]
 
       # Enable automatic backups via Hetzner (default: false)
       # backups = true
@@ -184,7 +208,7 @@ module "kube-hetzner" {
     # See the https://github.com/kube-hetzner/terraform-hcloud-kube-hetzner#examples for an example use case.
     {
       name        = "egress",
-      server_type = "cpx11",
+      server_type = "cx21",
       location    = "fsn1",
       labels = [
         "node.kubernetes.io/role=egress"
@@ -195,7 +219,7 @@ module "kube-hetzner" {
       floating_ip = true
       count = 1
     },
-    # Arm based nodes, currently available only in FSN and HEL locations
+    # Arm based nodes
     {
       name        = "agent-arm-small",
       server_type = "cax11",
@@ -253,8 +277,10 @@ module "kube-hetzner" {
   # By default we set a compatible version with the default initial_k3s_channel, to set another one,
   # have a look at the tag value in https://github.com/kubernetes/autoscaler/blob/master/charts/cluster-autoscaler/values.yaml
   # ⚠️ Based on how the autoscaler works with this project, you can only choose either x86 instances or ARM server types for ALL autoscaler nodepools.
-  # Also, as mentioned above, for the time being ARM cax* instances are only available in fsn1.
   # If you are curious, it's ok to have a multi-architecture cluster, as most underlying container images are multi-architecture too.
+  #
+  # ⚠️ Setting labels and taints will only work on cluster-autoscaler images versions released after > 20 October 2023. Or images built from master after that date.
+  #
   # * Example below:
   # autoscaler_nodepools = [
   #   {
@@ -263,9 +289,19 @@ module "kube-hetzner" {
   #     location    = "fsn1"
   #     min_nodes   = 0
   #     max_nodes   = 5
+  #     labels      = {
+  #       "node.kubernetes.io/role": "peak-workloads"
+  #     }
+  #     taints      =
+  #     [{
+  #        key: "node.kubernetes.io/role"
+  #        value: "peak-workloads"
+  #        effect: "NoExecute"
+  #     }]
   #   }
   # ]
 
+  # ⚠️ Deprecated, will be removed after a new Cluster Autoscaler version has been released which support the new way of setting labels and taints. See above.
   # Add extra labels on nodes started by the Cluster Autoscaler
   # This argument is not used if autoscaler_nodepools is not set, because the Cluster Autoscaler is installed only if autoscaler_nodepools is set
   # autoscaler_labels = [
@@ -377,6 +413,8 @@ module "kube-hetzner" {
   # After the cluster is deployed, you can always use HelmChartConfig definition to tweak the configuration.
   # If you want to disable both controllers set this to "none"
   # ingress_controller = "nginx"
+  # Namespace in which to deploy the ingress controllers. Defaults to the ingress_controller variable, eg (nginx, traefik)
+  # ingress_target_namespace = ""
 
   # You can change the number of replicas for selected ingress controller here. The default 0 means autoselecting based on number of agent nodes (1 node = 1 replica, 2 nodes = 2 replicas, 3+ nodes = 3 replicas)
   # ingress_replica_count = 1
@@ -389,8 +427,13 @@ module "kube-hetzner" {
 
   # If you want to configure additional arguments for traefik, enter them here as a list and in the form of traefik CLI arguments; see https://doc.traefik.io/traefik/reference/static-configuration/cli/
   # They are the options that go into the additionalArguments section of the Traefik helm values file.
+  # We already add "providers.kubernetesingress.ingressendpoint.publishedservice" by default so that Traefik works automatically with services such as External-DNS and ArgoCD.
   # Example:
   # traefik_additional_options = ["--log.level=DEBUG", "--tracing=true"]
+
+  # By default traefik image tag is an empty string which uses latest image tag.
+  # The default is "".
+  # traefik_image_tag = "v3.0.0-beta5"
 
   # By default traefik is configured to redirect http traffic to https, you can set this to "false" to disable the redirection.
   # The default is true.
@@ -412,8 +455,39 @@ module "kube-hetzner" {
   # Example:
   # traefik_additional_ports = [{name = "example", port = 1234, exposedPort = 1234}]
 
+
+  # If you want to configure additional trusted IPs for traefik, enter them here as a list of IPs (strings).
+  # Example for Cloudflare:
+  # traefik_additional_trusted_ips = [
+  #   "173.245.48.0/20",
+  #   "103.21.244.0/22",
+  #   "103.22.200.0/22",
+  #   "103.31.4.0/22",
+  #   "141.101.64.0/18",
+  #   "108.162.192.0/18",
+  #   "190.93.240.0/20",
+  #   "188.114.96.0/20",
+  #   "197.234.240.0/22",
+  #   "198.41.128.0/17",
+  #   "162.158.0.0/15",
+  #   "104.16.0.0/13",
+  #   "104.24.0.0/14",
+  #   "172.64.0.0/13",
+  #   "131.0.72.0/22",
+  #   "2400:cb00::/32",
+  #   "2606:4700::/32",
+  #   "2803:f800::/32",
+  #   "2405:b500::/32",
+  #   "2405:8100::/32",
+  #   "2a06:98c0::/29",
+  #   "2c0f:f248::/32"
+  # ]
+
   # If you want to disable the metric server set this to "false". Default is "true".
   # enable_metrics_server = false
+
+  # If you want to enable the k3s built-in local-storage controller set this to "true". Default is "false".
+  # enable_local_storage = false
 
   # If you want to allow non-control-plane workloads to run on the control-plane nodes, set this to "true". The default is "false".
   # True by default for single node clusters, and when enable_klipper_metal_lb is true. In those cases, the value below will be ignored.
@@ -446,7 +520,7 @@ module "kube-hetzner" {
   # see https://rancher.com/docs/k3s/latest/en/upgrades/basic/ and https://update.k3s.io/v1-release/channels
   # ⚠️ If you are going to use Rancher addons for instance, it's always a good idea to fix the kube version to latest - 0.01,
   # ⚠️ Rancher currently only supports v1.25 and earlier versions: https://github.com/rancher/rancher/issues/41113
-  # The default is "v1.26".
+  # The default is "v1.27".
   # initial_k3s_channel = "stable"
 
   # The cluster name, by default "k3s"
@@ -491,6 +565,11 @@ module "kube-hetzner" {
   # Additional flags to pass to the k3s agent command (every agents nodes, including autoscaler nodepools).
   # k3s_exec_agent_args = "--kubelet-arg kube-reserved=cpu=100m,memory=200Mi,ephemeral-storage=1Gi"
 
+  # The vars below here passes it to the k3s config.yaml. This way it persist across reboots
+  # k3s_global_kubelet_args = ["kube-reserved=cpu=100m,ephemeral-storage=1Gi", "system-reserved=cpu=memory=200Mi", "image-gc-high-threshold=50", "image-gc-low-threshold=40"]
+  # k3s_control_plane_kubelet_args = []
+  # k3s_agent_kubelet_args = []
+
   # If you want to allow all outbound traffic you can set this to "false". Default is "true".
   # restrict_outbound_traffic = false
 
@@ -498,6 +577,8 @@ module "kube-hetzner" {
   # Allowed values: null (disable Kube API rule entirely) or a list of allowed networks with CIDR notation.
   # For maximum security, it's best to disable it completely by setting it to null. However, in that case, to get access to the kube api,
   # you would have to connect to any control plane node via SSH, as you can run kubectl from within these.
+  # Please be advised that this setting has no effect on the load balancer when the use_control_plane_lb variable is set to true. This is
+  # because firewall rules cannot be applied to load balancers yet. 
   # firewall_kube_api_source = null
 
   # Allow SSH access from the specified networks. Default: ["0.0.0.0/0", "::/0"]
@@ -530,11 +611,13 @@ module "kube-hetzner" {
   # possible values: flannel (Default), calico, and cilium
   # As for Cilium, we allow infinite configurations via helm values, please check the CNI section of the readme over at https://github.com/kube-hetzner/terraform-hcloud-kube-hetzner/#cni.
   # Also, see the cilium_values at towards the end of this file, in the advanced section.
+  # ⚠️ Depending on your setup, sometimes you need your control-planes to have more than
+  # 2GB of RAM if you are going to use Cilium, otherwise the pods will not start.
   # cni_plugin = "cilium"
 
   # You can choose the version of Cilium that you want. By default we keep the version up to date and configure Cilium with compatible settings according to the version.
   # cilium_version = "v1.14.0"
-  
+
   # Set native-routing mode ("native") or tunneling mode ("tunnel"). Default: tunnel
   # cilium_routing_mode = "native"
 
@@ -564,9 +647,14 @@ module "kube-hetzner" {
   # You can enable cert-manager (installed by Helm behind the scenes) with the following flag, the default is "true".
   # enable_cert_manager = false
 
-  # IP Addresses to use for the DNS Servers, set to an empty list to use the ones provided by Hetzner https://docs.hetzner.com/dns-console/dns/general/recursive-name-servers/, (defaults is []).
+  # IP Addresses to use for the DNS Servers, the defaults are the ones provided by Hetzner https://docs.hetzner.com/dns-console/dns/general/recursive-name-servers/.
   # The number of different DNS servers is limited to 3 by Kubernetes itself.
-  # dns_servers = ["1.1.1.1", "8.8.8.8", "9.9.9.10"]
+  # It's always a good idea to have at least 1 IPv4 and 1 IPv6 DNS server for robustness.
+  dns_servers = [
+    "1.1.1.1",
+    "8.8.8.8",
+    "2606:4700:4700::1111",
+  ]
 
   # When this is enabled, rather than the first node, all external traffic will be routed via a control-plane loadbalancer, allowing for high availability.
   # The default is false.
@@ -584,30 +672,30 @@ module "kube-hetzner" {
   # additional_tls_sans = ["cp.cluster.my.org"]
 
   # lb_hostname Configuration:
-  # 
+  #
   # Purpose:
-  # The lb_hostname setting optimizes communication between services within the Kubernetes cluster 
-  # when they use domain names instead of direct service names. By associating a domain name directly 
+  # The lb_hostname setting optimizes communication between services within the Kubernetes cluster
+  # when they use domain names instead of direct service names. By associating a domain name directly
   # with the Hetzner Load Balancer, this setting can help reduce potential communication delays.
-  # 
+  #
   # Scenario:
-  # If Service B communicates with Service A using a domain (e.g., `a.mycluster.domain.com`) that points 
+  # If Service B communicates with Service A using a domain (e.g., `a.mycluster.domain.com`) that points
   # to an external Load Balancer, there can be a slowdown in communication.
-  # 
+  #
   # Guidance:
-  # - If your internal services use domain names pointing to an external LB, set lb_hostname to a domain 
+  # - If your internal services use domain names pointing to an external LB, set lb_hostname to a domain
   #   like `mycluster.domain.com`.
   # - Create an A record pointing `mycluster.domain.com` to your LB's IP.
   # - Create a CNAME record for `a.mycluster.domain.com` (or xyz.com) pointing to `mycluster.domain.com`.
-  # 
+  #
   # Technical Note:
-  # This setting sets the `load-balancer.hetzner.cloud/hostname` in the Hetzner LB definition, suitable for 
+  # This setting sets the `load-balancer.hetzner.cloud/hostname` in the Hetzner LB definition, suitable for
   # both Nginx and Traefik ingress controllers.
-  # 
+  #
   # Recommendation:
   # This setting is optional. If services communicate using direct service names, you can leave this unset.
   # For inter-namespace communication, use `.service_name` as per Kubernetes norms.
-  # 
+  #
   # Example:
   # lb_hostname = "mycluster.domain.com"
 
@@ -652,7 +740,7 @@ module "kube-hetzner" {
   # extra_kustomize_parameters={}
 
   # See an working example for just a manifest.yaml, a HelmChart and a HelmChartConfig examples/kustomization_user_deploy/README.md
-  
+
   # It is best practice to turn this off, but for backwards compatibility it is set to "true" by default.
   # See https://github.com/kube-hetzner/terraform-hcloud-kube-hetzner/issues/349
   # When "false". The kubeconfig file can instead be created by executing: "terraform output --raw kubeconfig > cluster_kubeconfig.yaml"
@@ -661,6 +749,11 @@ module "kube-hetzner" {
 
   # Don't create the kustomize backup. This can be helpful for automation.
   # create_kustomization = false
+
+  # Export the values.yaml files used for the deployment of traefik, longhorn, cert-manager, etc.
+  # This can be helpful to use them for later deployments like with ArgoCD.
+  # The default is false.
+  # export_values = true
 
   # MicroOS snapshot IDs to be used. Per default empty, the most recent image created using createkh will be used.
   # We recommend the default, but if you want to use specific IDs you can.
@@ -747,6 +840,9 @@ persistence:
   defaultClass: true
   EOT */
 
+  # If you want to use a specific Traefik helm chart version, set it below; otherwise, leave them as-is for the latest versions.
+  # traefik_version = ""
+
   # Traefik, all Traefik helm values can be found at https://github.com/traefik/traefik-helm-chart/blob/master/traefik/values.yaml
   # The following is an example, please note that the current indentation inside the EOT is important.
   /*   traefik_values = <<EOT
@@ -766,7 +862,9 @@ service:
 
 ports:
   web:
-    redirectTo: websecure
+    redirectTo:
+      port: websecure
+      priority: 10
 
     proxyProtocol:
       trustedIPs:
@@ -786,6 +884,9 @@ ports:
         - 127.0.0.1/32
         - 10.0.0.0/8
   EOT */
+
+  # If you want to use a specific Nginx helm chart version, set it below; otherwise, leave them as-is for the latest versions.
+  # nginx_version = ""
 
   # Nginx, all Nginx helm values can be found at https://github.com/kubernetes/ingress-nginx/blob/main/charts/ingress-nginx/values.yaml
   # You can also have a look at https://kubernetes.github.io/ingress-nginx/, to understand how it works, and all the options at your disposal.
@@ -826,11 +927,11 @@ provider "hcloud" {
 }
 
 terraform {
-  required_version = ">= 1.4.0"
+  required_version = ">= 1.5.0"
   required_providers {
     hcloud = {
       source  = "hetznercloud/hcloud"
-      version = ">= 1.41.0"
+      version = ">= 1.43.0"
     }
   }
 }
