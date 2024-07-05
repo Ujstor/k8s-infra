@@ -48,7 +48,7 @@ module "kube-hetzner" {
 
   agent_nodepools = [
     {
-      name                = "agent-small",
+      name                = "agent-small-1",
       server_type         = "cpx11",
       location            = "fsn1",
       labels              = [],
@@ -57,7 +57,7 @@ module "kube-hetzner" {
       longhor_volume_size = 50
     },
     {
-      name                = "agent-small",
+      name                = "agent-small-2",
       server_type         = "cpx11",
       location            = "nbg1",
       labels              = [],
@@ -66,7 +66,7 @@ module "kube-hetzner" {
       longhor_volume_size = 50
     },
     {
-      name                = "agent-small",
+      name                = "agent-small-3",
       server_type         = "cpx11",
       location            = "nbg1",
       labels              = [],

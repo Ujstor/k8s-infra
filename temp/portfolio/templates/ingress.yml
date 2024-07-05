@@ -6,7 +6,6 @@ metadata:
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt-cluster-issuer
     acme.cert-manager.io/http01-edit-in-place: "true"
-    nginx.ingress.kubernetes.io/force-ssl-redirect: "false"
     cert-manager.io/issue-temporary-certificate: "true"
     cert-manager.io/acme-challenge-type: http01
 

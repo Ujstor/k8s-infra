@@ -5,4 +5,4 @@ deployment:
 name: portfolio-deployment
 namespace: portfolio
 domain: portfolio.ujstor.com
-ingressClassName: nginx
+ingressClassName: traefik

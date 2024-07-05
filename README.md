@@ -1,7 +1,5 @@
 # k8s infrastructure & configuration as code
 
-
-
 Deploy Kubernetes cluster on Hetzner Cloud using the [kube-hetzner/terraform-hcloud-kube-hetzner](https://github.com/kube-hetzner/terraform-hcloud-kube-hetzner) repository. This project aims to create a highly optimized, auto-upgradable, highly available and cost-effective Kubernetes cluster on Hetzner Cloud.
 
 ## Prerequisites
@@ -14,8 +12,6 @@ Before you begin, ensure you have the following:
   - [Packer](https://www.packer.io/downloads)
   - [kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/)
   - [hcloud CLI](https://github.com/hetznercloud/cli)
-
-
 
 ## Deployment Steps
 
