@@ -14,14 +14,13 @@ k3d cluster create k8s-test \
 
 ## Cluster overview
 
-<img src="./public/01_control_plane_node.png" style="width:600px; height:400px;" />
+![Control Plane Node](./public/01_control_plane_node.png)
 
-<img src="./public/02_worker_node.png" style="width:600px; height:400px;" />
+![Worker Node](./public/02_worker_node.png)
 
-<img src="./public/03_diff_workloads_pod.png" style="width:600px; height:250px;" />
+![Different Workloads Pod](./public/03_diff_workloads_pod.png)
 
-<img src="./public/05_pod_network.png" style="width:600px; height:250px;" />
-
+![Pod Network](./public/05_pod_network.png)
 
 ## CP controllers
 
