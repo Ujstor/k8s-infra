@@ -23,3 +23,11 @@ kubectl rollout resume deploy <m-name>
 kubectl rollout history deployment <m-name>
 kubectl rollout undo deployment <m-name> --to-revision=1
 ```
+
+## Services
+
+```bash
+kubectl expose deployment svc-test --type=LoadBalancer
+kubectl get endpointslices
+kubectl describe endpointslice <slice-name>
+```

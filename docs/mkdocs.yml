@@ -37,6 +37,9 @@ nav:
     - Sidecar Pod: deployment/sidecar-pod.md
     - Deployment: deployment/deployment.md
     - Scaling: deployment/scaling.md
+  - Services:
+      - Labels: services/services.md
+      - Types: services/service-types.md
 
 extra:
     generator: false

@@ -34,6 +34,7 @@ kind: Service
 metadata:
   name: svc-sidecar
 spec:
+  type: ClusterIP
   selector:
     app: sidecar
   ports:

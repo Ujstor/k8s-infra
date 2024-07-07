@@ -22,57 +22,63 @@ k3d cluster create k8s-test \
 
 ![Pod Network](./public/05_pod_network.png)
 
-## CP controllers
+## Control Plane Components
 
-In Kubernetes the control plane is the central management entity that manages the state of the Kubernetes cluster. It consists of several key components, including various controllers that ensure the desired state of the cluster is maintained. Here are some of the primary types of controllers in the Kubernetes control plane:
+The control plane's components make global decisions about the cluster (for example, scheduling), as well as detecting and responding to cluster events (for example, starting up a new pod when a Deployment's replicas field is unsatisfied).
+Control plane components can be run on any machine in the cluster. However, for simplicity, setup scripts typically start all control plane components on the same machine, and do not run user containers on this machine. See Creating Highly Available clusters with kubeadm for an example control plane setup that runs across multiple machines.
 
-1. **Replication Controller**:
-    Ensures that a specified number of pod replicas are running at any given time. If there are too few replicas, it creates more; if there are too many, it deletes some.
+### kube-apiserver
+The API server is a component of the Kubernetes control plane that exposes the Kubernetes API. The API server is the front end for the Kubernetes control plane.
 
-2. **Deployment Controller**:
-    Manages Deployment resources to provide declarative updates to applications. It can roll back changes, perform rolling updates, and handle scaling.
+The main implementation of a Kubernetes API server is kube-apiserver. kube-apiserver is designed to scale horizontally—that is, it scales by deploying more instances. You can run several instances of kube-apiserver and balance traffic between those instances.
 
-3. **StatefulSet Controller**:
-    Manages StatefulSet resources, providing guarantees about the ordering and uniqueness of pods. This is useful for applications that require stable, unique network identifiers or persistent storage.
+### etcd
+Consistent and highly-available key value store used as Kubernetes' backing store for all cluster data.
+If your Kubernetes cluster uses etcd as its backing store, make sure you have a back up plan for the data.
+You can find in-depth information about etcd in the official [documentation](https://etcd.io/docs/).
 
-4. **DaemonSet Controller**:
-    Ensures that a copy of a pod is running on all (or some) nodes. This is often used for running cluster-wide services like logging and monitoring agents.
+### kube-scheduler
+Control plane component that watches for newly created Pods with no assigned node, and selects a node for them to run on.
+Factors taken into account for scheduling decisions include: individual and collective resource requirements, hardware/software/policy constraints, affinity and anti-affinity specifications, data locality, inter-workload interference, and deadlines.
 
-5. **Job Controller**:
-    Manages Job resources, which run a specified number of pod completions and ensure that a specified number of them successfully terminate. This is typically used for batch processing.
+### kube-controller-manager
+Control plane component that runs controller processes.
+Logically, each controller is a separate process, but to reduce complexity, they are all compiled into a single binary and run in a single process.
+There are many different types of controllers. Some examples of them are:
 
-6. **CronJob Controller**:
-    Manages CronJob resources, which create Jobs on a time-based schedule.
+- Node controller: Responsible for noticing and responding when nodes go down.
+- Job controller: Watches for Job objects that represent one-off tasks, then creates Pods to run those tasks to completion.
+- EndpointSlice controller: Populates EndpointSlice objects (to provide a link between Services and Pods).
+- ServiceAccount controller: Create default ServiceAccounts for new namespaces.
 
-7. **ReplicaSet Controller**:
-    Ensures that a specified number of pod replicas are running. It's similar to the Replication Controller but supports set-based label selectors. ReplicaSets are primarily used by Deployments.
+The above is not an exhaustive list.
 
-8. **Service Controller**:
-    Manages Service resources, ensuring that the correct network endpoints are set up to route traffic to the appropriate pods.
+### cloud-controller-manager
+A Kubernetes control plane component that embeds cloud-specific control logic. The cloud controller manager lets you link your cluster into your cloud provider's API, and separates out the components that interact with that cloud platform from components that only interact with your cluster.
+The cloud-controller-manager only runs controllers that are specific to your cloud provider. If you are running Kubernetes on your own premises, or in a learning environment inside your own PC, the cluster does not have a cloud controller manager.
 
-9. **Ingress Controller**:
-    Manages Ingress resources, providing HTTP and HTTPS routing to services within the cluster based on hostnames and paths.
+As with the kube-controller-manager, the cloud-controller-manager combines several logically independent control loops into a single binary that you run as a single process. You can scale horizontally (run more than one copy) to improve performance or to help tolerate failures.
 
-10. **Node Controller**:
-    Manages various aspects of nodes, including node status updates, node lifecycle management, and running node-specific operations.
+The following controllers can have cloud provider dependencies:
 
-11. **Endpoint Controller**:
-     Manages Endpoints resources, updating the list of endpoints in a Service whenever the set of pods in a Service changes.
+- Node controller: For checking the cloud provider to determine if a node has been deleted in the cloud after it stops responding
+- Route controller: For setting up routes in the underlying cloud infrastructure
+- Service controller: For creating, updating and deleting cloud provider load balancers
 
-12. **Namespace Controller**:
-     Manages namespace resources, handling cleanup of resources when a namespace is deleted.
 
-13. **ServiceAccount Controller**:
-     Manages ServiceAccount resources, ensuring that default service accounts are created for new namespaces and tokens are created for service accounts.
+## Node Components
+Node components run on every node, maintaining running pods and providing the Kubernetes runtime environment.
 
-14. **PersistentVolume (PV) Controller**:
-     Manages PersistentVolume resources, ensuring that persistent storage is available for use by PersistentVolumeClaim resources.
+### kubelet
+An agent that runs on each node in the cluster. It makes sure that containers are running in a Pod.
+The kubelet takes a set of PodSpecs that are provided through various mechanisms and ensures that the containers described in those PodSpecs are running and healthy. The kubelet doesn't manage containers which were not created by Kubernetes.
 
-15. **PersistentVolumeClaim (PVC) Controller**:
-     Manages PersistentVolumeClaim resources, binding them to appropriate PersistentVolume resources.
+### kube-proxy
+kube-proxy is a network proxy that runs on each node in your cluster, implementing part of the Kubernetes Service concept.
+kube-proxy maintains network rules on nodes. These network rules allow network communication to your Pods from network sessions inside or outside of your cluster.
+kube-proxy uses the operating system packet filtering layer if there is one and it's available. Otherwise, kube-proxy forwards the traffic itself.
 
-16. **Horizontal Pod Autoscaler (HPA) Controller**:
-     Manages HorizontalPodAutoscaler resources, which automatically scale the number of pods in a deployment, replica set, or stateful set based on observed CPU utilization (or other select metrics).
+### Container runtime
+A fundamental component that empowers Kubernetes to run containers effectively. It is responsible for managing the execution and lifecycle of containers within the Kubernetes environment.
 
-These controllers work together to ensure that the Kubernetes cluster functions smoothly, automating tasks like scaling, self-healing, and rolling updates to maintain the desired state specified by the user.
-
+Kubernetes supports container runtimes such as containerd, CRI-O, and any other implementation of the Kubernetes CRI (Container Runtime Interface).
