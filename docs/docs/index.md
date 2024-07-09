@@ -12,6 +12,22 @@ k3d cluster create k8s-test \
   --k3s-node-label "type=worker@agent:0,1,2"
 ```
 
+### Nginx controller
+
+```bash
+k3d cluster create k8s-test \
+  --servers 3 \
+  --agents 3 \
+  --k3s-arg "--disable=traefik@server:*" \
+  --k3s-node-label "type=control@server:0,1,2" \
+  --k3s-node-label "type=worker@agent:0,1,2"
+```
+```bash
+helm repo add nginx-stable https://helm.nginx.com/stable
+helm repo update
+helm install nginx-ingress nginx-stable/nginx-ingress
+```
+
 ## Cluster overview
 
 ![Control Plane Node](./public/01_control_plane_node.png)

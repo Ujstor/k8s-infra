@@ -1,0 +1,46 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ingress
+  annotations:
+    treafik.ingress.kubernetes.io/rewrite-target: /
+spec:
+  ingressClassName: traefik
+  rules:
+  - host: shield.cluster.xyz
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: svc-shield
+            port:
+              number: 8080
+  - host: hydra.cluster.xyz
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: svc-hydra
+            port:
+              number: 8080
+  - host: cluster.xyz
+    http:
+      paths:
+      - path: /shield
+        pathType: Prefix
+        backend:
+          service:
+            name: svc-shield
+            port:
+              number: 8080
+      - path: /hydra
+        pathType: Prefix
+        backend:
+          service:
+            name: svc-hydra
+            port:
+              number: 8080

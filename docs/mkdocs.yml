@@ -40,6 +40,9 @@ nav:
   - Services:
       - Labels: services/services.md
       - Types: services/service-types.md
+  - Ingress:
+    - Ingress: ingress/ingress.md
+    - Config: ingress/config.md
 
 extra:
     generator: false
