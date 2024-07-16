@@ -19,6 +19,7 @@ k3d cluster create k8s-test \
   --servers 3 \
   --agents 3 \
   --k3s-arg "--disable=traefik@server:*" \
+  --volume /mnt/ssd1tbp2/data/:/mnt/data/ \
   --k3s-node-label "type=control@server:0,1,2" \
   --k3s-node-label "type=worker@agent:0,1,2"
 ```

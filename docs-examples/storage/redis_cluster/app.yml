@@ -1,0 +1,52 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hit-counter-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: myapp
+  template:
+    metadata:
+      labels:
+        app: myapp
+    spec:
+      containers:
+      - name: myapp
+        image: aimvector/api-redis-ha:1.0
+        ports:
+        - containerPort: 5000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: hit-counter-svc
+spec:
+  type: ClusterIP
+  ports:
+  - port: 80
+    protocol: TCP
+    targetPort: 5000
+  selector:
+      app: myapp
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: hit-counter-svc 
+
+spec:
+  ingressClassName: traefik
+  rules:
+  - host: cluster.xyz
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: hit-counter-svc
+            port:
+              number: 80

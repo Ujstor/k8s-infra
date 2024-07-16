@@ -44,6 +44,11 @@ nav:
   - Ingress:
     - Ingress: ingress/ingress.md
     - Config: ingress/config.md
+  - Storage:
+    - PV Subsystem: storage/pvs.md
+    - CSI: storage/csi.md
+    - SC: storage/sc.md
+    - Redis Cluster: storage/redis-cluster.md
 
 extra:
     generator: false
